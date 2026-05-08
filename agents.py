@@ -1,18 +1,18 @@
 """
 agents.py
 ─────────────────────────────────────────────────────────────────────────────
-Defines all 5 CrewAI Agents for the AI Stock Valuation Multi-Agent System.
+Defines all 9 CrewAI Agents for the AI Stock Valuation Multi-Agent System.
 
 Agent Roster:
-  1. The Interrogator   — Generates deep investigative research questions.
-  2. The Quant          — Financial health, cash flow, valuation metrics.
+  1. The Interrogator        — Generates deep investigative research questions.
+  2. The Quant               — Financial health, cash flow, valuation metrics.
   3. The Business Strategist — Moats, risks, management quality.
-  4. The Futurist       — R&D, technology trends, S-Curve analysis.
-  5. The CIO            — Synthesises all reports → Buy / Hold / Pass.
-  6. The Thai Summarizer — Translates the final verdict into Thai.
-
-Each agent receives the RAG tool so all factual claims are grounded in the
-official financial documents ingested during the RAG setup phase.
+  4. The Futurist            — R&D, technology trends, S-Curve analysis.
+  5. The Risk & Macro Analyst — Macro risks, geopolitics, rate sensitivity.
+  6. The ESG & Gov. Auditor  — Governance, board quality, ESG deep-dive.
+  7. The Devil's Advocate    — Bear case architect & valuation stress-tester.
+  8. The CIO                 — Synthesises all reports → Buy / Hold / Pass.
+  9. The Thai Summarizer     — Translates the final verdict into Thai.
 ─────────────────────────────────────────────────────────────────────────────
 """
 
@@ -40,9 +40,9 @@ def build_llm(temperature: float = 0.1) -> LLM:
     """
     import os
     return LLM(
-        model="gemini/gemini-2.5-flash-lite",
+        model="gemini/gemini-2.5-flash",
         temperature=temperature,
-        max_tokens=8_192,
+        max_tokens=16_384,
         api_key=os.environ.get("GOOGLE_API_KEY"),
     )
 
@@ -90,10 +90,12 @@ class StockValuationAgents:
         return Agent(
             role="Chief Investment Research Interrogator",
             goal=(
-                "Generate a definitive, structured list of 15–20 targeted research "
+                "Generate a definitive, structured list of 20–25 targeted research "
                 "questions covering financial health, competitive positioning, management "
-                "quality, and future growth vectors. Every question must expose either a risk or a "
-                "value driver that materially affects a Buy/Hold/Pass decision."
+                "quality, future growth vectors, macro risks, ESG governance, and valuation. "
+                "Every question must expose either a risk or a value driver that materially "
+                "affects a Buy/Hold/Pass decision. Questions should be specific enough that "
+                "a wrong answer would change the investment verdict."
             ),
             backstory=(
                 "You are a former Goldman Sachs equity research director with 20 years "
@@ -107,8 +109,8 @@ class StockValuationAgents:
             tools=[self._yahoo_tool],
             llm=self._llm_analytical,
             verbose=True,
-            allow_delegation=False,    # The Interrogator works alone
-            max_iter=3,                # Prevent infinite tool-call loops
+            allow_delegation=False,
+            max_iter=5,
         )
 
     def build_quant(self) -> Agent:
@@ -145,7 +147,7 @@ class StockValuationAgents:
             llm=self._llm_analytical,
             verbose=True,
             allow_delegation=False,
-            max_iter=6,   # +1 iteration budget for the extra yahoo tool call
+            max_iter=8,
         )
 
     def build_business_strategist(self) -> Agent:
@@ -184,7 +186,7 @@ class StockValuationAgents:
             llm=self._llm_creative,
             verbose=True,
             allow_delegation=False,
-            max_iter=4,
+            max_iter=6,
         )
 
     def build_futurist(self) -> Agent:
@@ -225,7 +227,7 @@ class StockValuationAgents:
             llm=self._llm_creative,
             verbose=True,
             allow_delegation=False,
-            max_iter=4,
+            max_iter=6,
         )
 
     def build_cio(self) -> Agent:
@@ -266,11 +268,11 @@ class StockValuationAgents:
                 "that can be clearly communicated to a board in under two minutes. You are "
                 "the final decision-maker and you own the verdict completely."
             ),
-            tools=[],             # CIO synthesises — no RAG needed at this stage
+            tools=[],
             llm=self._llm_analytical,
             verbose=True,
             allow_delegation=False,
-            max_iter=3,
+            max_iter=5,
         )
 
     def build_thai_summarizer(self) -> Agent:
@@ -300,30 +302,163 @@ class StockValuationAgents:
             llm=self._llm_creative,
             verbose=True,
             allow_delegation=False,
-            max_iter=3,
+            max_iter=4,
+        )
+
+    def build_risk_analyst(self) -> Agent:
+        """
+        Agent 7 — The Risk & Macro Analyst
+
+        Role: Analyses macro-economic, geopolitical, and sector-level risks
+        that could materially impact the investment thesis.
+        """
+        return Agent(
+            role="Macro Risk & Geopolitical Analyst",
+            goal=(
+                "Produce a comprehensive macro and sector risk analysis covering: "
+                "(a) Interest Rate Sensitivity — how does this company's valuation and "
+                "debt structure respond to a +200bps rate shock? "
+                "(b) Geopolitical & Supply Chain Risks — key geographic exposures, "
+                "tariff risks, and single-source dependencies; "
+                "(c) Sector Rotation Risk — where is this sector in the economic cycle? "
+                "Is it defensive or cyclical? What does sector rotation imply for the stock? "
+                "(d) Currency Risk — revenue/cost exposure to FX movements and hedging; "
+                "(e) Regulatory & Policy Risk — pending legislation or regulatory shifts "
+                "that could materially alter the business model or competitive landscape; "
+                "(f) Black Swan Scenarios — 2 plausible extreme-downside scenarios with "
+                "estimated probability and impact on intrinsic value. "
+                "Conclude with an overall Macro Risk Rating: "
+                "[Low / Moderate / High / Extreme] with one-paragraph justification."
+            ),
+            backstory=(
+                "You are a former Chief Macro Strategist at a $50B global macro hedge fund "
+                "with 25 years of experience navigating market cycles, geopolitical crises, "
+                "and regulatory upheavals across emerging and developed markets. You have "
+                "lived through the Asian financial crisis, the GFC, COVID, and multiple rate "
+                "cycles. You believe every equity investment is also a macro bet, and that "
+                "ignoring macro context is the most common cause of catastrophic portfolio "
+                "losses. You think in correlations, stress scenarios, and tail risks."
+            ),
+            tools=[self._yahoo_tool],
+            llm=self._llm_analytical,
+            verbose=True,
+            allow_delegation=False,
+            max_iter=5,
+        )
+
+    def build_esg_auditor(self) -> Agent:
+        """
+        Agent 8 — The ESG & Governance Auditor
+
+        Role: Deep-dives into corporate governance quality, ESG performance,
+        board composition, executive compensation, and shareholder rights.
+        """
+        return Agent(
+            role="ESG & Corporate Governance Auditor",
+            goal=(
+                "Conduct a rigorous ESG and governance audit covering: "
+                "(a) Board Quality — independence, diversity, relevant expertise, "
+                "and average tenure of board members; "
+                "(b) Executive Compensation — is pay aligned with long-term shareholder "
+                "value? Are incentives linked to ROIC, FCF, and multi-year targets? "
+                "(c) Shareholder Rights — dual-class share structures, poison pills, "
+                "anti-takeover provisions, director accountability mechanisms; "
+                "(d) Environmental Commitments — net-zero targets, carbon intensity trends, "
+                "Scope 1/2/3 emissions, and credibility of climate pledges; "
+                "(e) Social Responsibility — labour practices, supply chain ethics, "
+                "data privacy track record, and customer trust metrics; "
+                "(f) Governance Red Flags — related-party transactions, frequent auditor "
+                "changes, earnings restatements, or SEC/regulatory investigations. "
+                "Assign an ESG Risk Score: [Low / Medium / High / Critical] per pillar "
+                "and overall, with specific evidence cited for each rating."
+            ),
+            backstory=(
+                "You are a former lead ESG analyst at a major institutional asset manager "
+                "with a legal background in corporate governance. You have audited hundreds "
+                "of companies across sectors and know that poor governance is the #1 predictor "
+                "of accounting fraud and long-term value destruction. You use the MSCI ESG "
+                "framework, the ISS governance quality score, and SASB standards as your "
+                "analytical toolkit. You are deeply sceptical of greenwashing and only credit "
+                "companies for ESG commitments that are measurable and independently verified."
+            ),
+            tools=[self._yahoo_tool],
+            llm=self._llm_analytical,
+            verbose=True,
+            allow_delegation=False,
+            max_iter=5,
+        )
+
+    def build_devils_advocate(self) -> Agent:
+        """
+        Agent 9 — The Valuation Devil's Advocate
+
+        Role: Stress-tests the bull case. Constructs bear scenarios, challenges
+        valuation assumptions, and identifies what the market may be wrong about.
+        """
+        return Agent(
+            role="Valuation Devil's Advocate & Bear Case Architect",
+            goal=(
+                "Challenge every optimistic assumption and construct the most rigorous "
+                "bear case possible. Your analysis must cover: "
+                "(a) Valuation Stress Test — model 3 scenarios (Base / Bear / Deep Bear) "
+                "with implied price targets and clearly stated key assumptions for each; "
+                "(b) Consensus Risk — where is the Street most likely wrong? What is the "
+                "most dangerous widely-held belief about this company? "
+                "(c) Hidden Liabilities — off-balance-sheet obligations, operating lease "
+                "commitments, pension liabilities, contingent litigation liabilities; "
+                "(d) Accounting Quality — are earnings high-quality (cash-backed) or "
+                "dependent on aggressive accounting assumptions? Analyse the accruals ratio; "
+                "(e) Specific Moat Erosion Scenario — construct a 5-year scenario in which "
+                "the competitive moat deteriorates, naming the exact competitor or technology; "
+                "(f) Management Execution Risk — cite 2 specific prior instances where "
+                "management missed guidance or destroyed shareholder capital. "
+                "Conclude with a Margin of Safety Assessment: at the current market price, "
+                "how much downside protection does an investor have if the bear case plays out?"
+            ),
+            backstory=(
+                "You are the most feared short-seller on Wall Street, modelled on the "
+                "analytical rigour of Jim Chanos and the forensic accounting expertise of "
+                "Muddy Waters Research. You have exposed accounting frauds, identified value "
+                "traps, and saved portfolios from catastrophic losses by asking the questions "
+                "no one else dared to ask. You believe the best investment research always "
+                "starts with: 'What would have to be true for this to be a terrible "
+                "investment?' You are not a perma-bear — when evidence supports a bull case "
+                "you acknowledge it — but only after exhausting every bear scenario first."
+            ),
+            tools=[self._yahoo_tool],
+            llm=self._llm_analytical,
+            verbose=True,
+            allow_delegation=False,
+            max_iter=6,
         )
 
     # ── Build All ──────────────────────────────────────────────────────────────
 
     def build_all(self) -> dict[str, Agent]:
         """
-        Instantiate and return all 5 agents as a named dictionary.
+        Instantiate and return all 9 agents as a named dictionary.
 
         Returns:
             {
-                "interrogator": Agent,
-                "quant":        Agent,
-                "strategist":   Agent,
-                "futurist":     Agent,
-                "cio":          Agent,
-                "thai_summarizer": Agent,
+                "interrogator":    Agent,   # Question framework
+                "quant":           Agent,   # Financial health
+                "strategist":      Agent,   # Competitive moat
+                "futurist":        Agent,   # S-Curves & growth
+                "risk_analyst":    Agent,   # Macro & geopolitical risk  [NEW]
+                "esg_auditor":     Agent,   # ESG & governance           [NEW]
+                "devils_advocate": Agent,   # Bear case architect        [NEW]
+                "cio":             Agent,   # Final verdict
+                "thai_summarizer": Agent,   # Thai translation
             }
         """
         return {
-            "interrogator": self.build_interrogator(),
-            "quant":        self.build_quant(),
-            "strategist":   self.build_business_strategist(),
-            "futurist":     self.build_futurist(),
-            "cio":          self.build_cio(),
+            "interrogator":    self.build_interrogator(),
+            "quant":           self.build_quant(),
+            "strategist":      self.build_business_strategist(),
+            "futurist":        self.build_futurist(),
+            "risk_analyst":    self.build_risk_analyst(),
+            "esg_auditor":     self.build_esg_auditor(),
+            "devils_advocate": self.build_devils_advocate(),
+            "cio":             self.build_cio(),
             "thai_summarizer": self.build_thai_summarizer(),
         }
