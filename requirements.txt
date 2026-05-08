@@ -1,0 +1,33 @@
+# AI Stock Valuation Multi-Agent System
+# Python 3.12+
+# Install: pip install -r requirements.txt
+
+# ── Multi-Agent Framework ──────────────────────────────────────────────────
+crewai>=0.55.0
+crewai-tools>=0.8.0
+
+# ── LLM — Gemini via LiteLLM (bundled inside crewai.LLM) ─────────────────
+# crewai already pulls in litellm; no separate install needed.
+# For Gemini embeddings we need the Google GenAI LangChain integration:
+langchain-google-genai>=1.0.0
+
+# ── RAG / Vector Store ────────────────────────────────────────────────────
+langchain>=0.2.0
+langchain-community>=0.2.0
+langchain-text-splitters>=0.2.0   # RecursiveCharacterTextSplitter (moved from langchain core)
+langchain-chroma>=0.1.0
+chromadb>=0.5.0
+
+# ── PDF Parsing ───────────────────────────────────────────────────────────
+pypdf>=4.0.0
+
+# ── Utilities ─────────────────────────────────────────────────────────────
+python-dotenv>=1.0.0    # Optional: load GOOGLE_API_KEY from .env file
+yfinance>=0.2.40
+
+# ── Web Backend ───────────────────────────────────────────────────────────
+fastapi>=0.110.0
+uvicorn>=0.29.0
+
+# ── NotebookLM Integration ────────────────────────────────────────────────
+notebooklm-py[browser]>=0.3.4   # pip install "notebooklm-py[browser]" && playwright install chromium

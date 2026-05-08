@@ -1,0 +1,55 @@
+# ========================
+# Sensitive / Credentials
+# ========================
+.env
+credentials.json
+service_account.json
+token.json
+.notebooklm/
+
+# ========================
+# Python
+# ========================
+venv/
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# ========================
+# Generated / Large Data
+# ========================
+data/*.pdf
+data/*.csv
+data/*.xlsx
+chroma_db/
+
+# ========================
+# Output Reports
+# ========================
+reports/
+
+# ========================
+# macOS
+# ========================
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ========================
+# IDE / Editor
+# ========================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ========================
+# Claude Code
+# ========================
+.claude/
